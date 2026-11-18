@@ -99,3 +99,47 @@ class Medico(Persona):
 
     def obtener_datos(self) -> str:
         return f"Médico [{self._codigo_medico}]: {self._nombres} ({self._especialidad})"
+
+    class CentroSalud:
+    def __init__(self, nombre: str, ubicacion: str) -> None:
+        self.nombre = nombre
+        self.ubicacion = ubicacion
+        self._medicos = []
+
+    def agregar_medico(self, medico: Medico) -> None:
+        self._medicos.append(medico)
+
+    def consultar_personal(self) -> list:
+        return list(self._medicos)
+
+
+class Cita:
+    def __init__(self, codigo: str, paciente: Paciente, medico: Medico, fecha_hora: datetime, motivo: str) -> None:
+        self.codigo = codigo
+        self.paciente = paciente
+        self.medico = medico
+        self.fecha_hora = fecha_hora
+        self.motivo = motivo
+        self.estado = "PROGRAMADA"
+
+    def reprogramar(self, nueva_fecha: datetime) -> None:
+        if self.estado == "CANCELADA":
+            raise DatosInvalidosError("No se puede reprogramar una cita cancelada.")
+        self.fecha_hora = nueva_fecha
+        self.estado = "REPROGRAMADA"
+
+    def cancelar(self) -> None:
+        self.estado = "CANCELADA"
+
+
+class Atencion:
+    def __init__(self, codigo: str, cita: Cita, fecha: date, observacion: str) -> None:
+        self.codigo = codigo
+        self.cita = cita
+        self.fecha = fecha
+        self.__observacion_cifrada = "".join(chr(ord(c) + 3) for c in observacion)
+
+    def consultar_observacion(self, rol_usuario: str) -> str:
+        if rol_usuario not in ("MEDICO", "JEFA_ESTABLECIMIENTO"):
+            raise PermissionError("Rol sin autorización para ver diagnósticos clínicos.")
+        return "".join(chr(ord(c) - 3) for c in self.__observacion_cifrada)
