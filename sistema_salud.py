@@ -143,3 +143,44 @@ class Atencion:
         if rol_usuario not in ("MEDICO", "JEFA_ESTABLECIMIENTO"):
             raise PermissionError("Rol sin autorización para ver diagnósticos clínicos.")
         return "".join(chr(ord(c) - 3) for c in self.__observacion_cifrada)
+
+    class RepositorioDatos:
+    _instancia = None
+
+    def __new__(cls):
+        if cls._instancia is None:
+            cls._instancia = super().__new__(cls)
+            cls._instancia._pacientes = []
+            cls._instancia._citas = []
+            cls._instancia._atenciones = []
+            cls._instancia.eventos = GestorEventos()
+        return cls._instancia
+
+    @classmethod
+    def obtener_instancia(cls):
+        return cls()
+
+    def registrar_paciente(self, paciente: Paciente) -> None:
+        self._pacientes.append(paciente)
+        self.eventos.emitir("PACIENTE_REGISTRADO", f"DNI {paciente.dni_enmascarado}")
+
+    def programar_cita(self, nueva_cita: Cita) -> None:
+        for c in self._citas:
+            if c.estado != "CANCELADA" and c.fecha_hora == nueva_cita.fecha_hora and (
+                c.paciente == nueva_cita.paciente or c.medico.codigo_medico == nueva_cita.medico.codigo_medico
+            ):
+                raise CitaDuplicadaError("Conflicto de horario: el paciente o médico ya tiene una cita activa.")
+        self._citas.append(nueva_cita)
+        self.eventos.emitir("CITA_PROGRAMADA", f"Cita {nueva_cita.codigo} ({nueva_cita.paciente.dni_enmascarado})")
+
+    def registrar_atencion(self, atencion: Atencion) -> None:
+        self._atenciones.append(atencion)
+        self.eventos.emitir("ATENCION_REGISTRADA", f"Atención {atencion.codigo}")
+
+    @property
+    def citas(self) -> list:
+        return list(self._citas)
+
+    @property
+    def atenciones(self) -> list:
+        return list(self._atenciones)
