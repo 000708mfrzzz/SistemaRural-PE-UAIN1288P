@@ -184,3 +184,56 @@ class Atencion:
     @property
     def atenciones(self) -> list:
         return list(self._atenciones)
+
+    class DetalleReporte:
+    def __init__(self, total_citas: int, total_atenciones: int, por_procedencia: dict) -> None:
+        self.total_citas = total_citas
+        self.total_atenciones = total_atenciones
+        self.por_procedencia = por_procedencia
+
+
+class ReporteAtencion(ABC):
+    def __init__(self, fecha_inicio: date, fecha_fin: date) -> None:
+        self.fecha_inicio = fecha_inicio
+        self.fecha_fin = fecha_fin
+        self.detalle = None
+
+    @abstractmethod
+    def generar_reporte(self, repo: RepositorioDatos) -> dict:
+        pass
+
+
+class ReportePorPeriodo(ReporteAtencion):
+    def generar_reporte(self, repo: RepositorioDatos) -> dict:
+        filtradas = filtrar_atenciones_por_rango(repo.atenciones, self.fecha_inicio, self.fecha_fin)
+        self.detalle = DetalleReporte(len(repo.citas), len(filtradas), contar_por_procedencia(filtradas))
+        repo.eventos.emitir("REPORTE_GENERADO", f"Período {self.fecha_inicio} al {self.fecha_fin}")
+        return {
+            "tipo": "Reporte por Período",
+            "total_atenciones": self.detalle.total_atenciones,
+            "por_procedencia": self.detalle.por_procedencia,
+            "registros": resumir_atenciones(filtradas),
+        }
+
+
+class ReporteMensual(ReporteAtencion):
+    def generar_reporte(self, repo: RepositorioDatos) -> dict:
+        datos = ReportePorPeriodo(self.fecha_inicio, self.fecha_fin).generar_reporte(repo)
+        datos["tipo"] = "Reporte Mensual"
+        return datos
+
+
+class CreadorReporte(ABC):
+    @abstractmethod
+    def crear_reporte(self, fecha_inicio: date, fecha_fin: date) -> ReporteAtencion:
+        pass
+
+
+class ReportePorPeriodoFactory(CreadorReporte):
+    def crear_reporte(self, fecha_inicio: date, fecha_fin: date) -> ReporteAtencion:
+        return ReportePorPeriodo(fecha_inicio, fecha_fin)
+
+
+class ReporteMensualFactory(CreadorReporte):
+    def crear_reporte(self, fecha_inicio: date, fecha_fin: date) -> ReporteAtencion:
+        return ReporteMensual(fecha_inicio, fecha_fin)
