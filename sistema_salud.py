@@ -13,3 +13,22 @@ class DatosInvalidosError(ErrorSistemaSalud):
 
 class CitaDuplicadaError(ErrorSistemaSalud):
     pass
+
+def validar_dni(dni: str) -> bool:
+    return isinstance(dni, str) and len(dni) == 8 and dni.isdigit()
+
+
+def filtrar_atenciones_por_rango(atenciones: list, inicio: date, fin: date) -> list:
+    return list(filter(lambda a: inicio <= a.fecha <= fin, atenciones))
+
+
+def resumir_atenciones(atenciones: list) -> list:
+    return list(map(lambda a: (a.codigo, a.fecha.isoformat(), a.cita.paciente.dni_enmascarado), atenciones))
+
+
+def contar_por_procedencia(atenciones: list) -> dict:
+    return reduce(
+        lambda acc, a: {**acc, a.cita.paciente.procedencia: acc.get(a.cita.paciente.procedencia, 0) + 1},
+        atenciones,
+        {},
+    )
