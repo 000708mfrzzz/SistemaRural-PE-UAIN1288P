@@ -14,6 +14,7 @@ class DatosInvalidosError(ErrorSistemaSalud):
 class CitaDuplicadaError(ErrorSistemaSalud):
     pass
 
+
 def validar_dni(dni: str) -> bool:
     return isinstance(dni, str) and len(dni) == 8 and dni.isdigit()
 
@@ -33,6 +34,7 @@ def contar_por_procedencia(atenciones: list) -> dict:
         {},
     )
 
+
 class GestorEventos:
     def __init__(self) -> None:
         self._suscriptores = {}
@@ -47,7 +49,8 @@ class GestorEventos:
         for manejador in self._suscriptores.get(evento, []):
             manejador(registro)
 
-            class Persona(ABC):
+
+class Persona(ABC):
     def __init__(self, nombres: str, fecha_nacimiento: date, sexo: str) -> None:
         if not nombres.strip():
             raise DatosInvalidosError("El nombre no puede estar vacío.")
@@ -100,7 +103,8 @@ class Medico(Persona):
     def obtener_datos(self) -> str:
         return f"Médico [{self._codigo_medico}]: {self._nombres} ({self._especialidad})"
 
-    class CentroSalud:
+
+class CentroSalud:
     def __init__(self, nombre: str, ubicacion: str) -> None:
         self.nombre = nombre
         self.ubicacion = ubicacion
@@ -144,7 +148,8 @@ class Atencion:
             raise PermissionError("Rol sin autorización para ver diagnósticos clínicos.")
         return "".join(chr(ord(c) - 3) for c in self.__observacion_cifrada)
 
-    class RepositorioDatos:
+
+class RepositorioDatos:
     _instancia = None
 
     def __new__(cls):
@@ -185,7 +190,8 @@ class Atencion:
     def atenciones(self) -> list:
         return list(self._atenciones)
 
-    class DetalleReporte:
+
+class DetalleReporte:
     def __init__(self, total_citas: int, total_atenciones: int, por_procedencia: dict) -> None:
         self.total_citas = total_citas
         self.total_atenciones = total_atenciones
