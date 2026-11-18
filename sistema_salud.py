@@ -32,3 +32,17 @@ def contar_por_procedencia(atenciones: list) -> dict:
         atenciones,
         {},
     )
+
+class GestorEventos:
+    def __init__(self) -> None:
+        self._suscriptores = {}
+        self.auditoria = []
+
+    def suscribir(self, evento: str, manejador) -> None:
+        self._suscriptores.setdefault(evento, []).append(manejador)
+
+    def emitir(self, evento: str, detalle: str) -> None:
+        registro = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {evento}: {detalle}"
+        self.auditoria.append(registro)
+        for manejador in self._suscriptores.get(evento, []):
+            manejador(registro)
